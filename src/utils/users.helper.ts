@@ -65,3 +65,49 @@ export const addNewUser = async (request: http.IncomingMessage, response: http.S
         response.end(JSON.stringify({ message: 'There are not enough required data to create a user.' }));
     }
 }
+
+export const updateUserInfo = async (request: http.IncomingMessage, response: http.ServerResponse, id: string): Promise<void> => {
+    if(!uuidReg.test(id)) {
+        response.writeHead(400, { 'Content-type': 'application/json' });
+        response.end(JSON.stringify({ message: 'Invalid userId.' }));
+        return;
+    }
+
+    const data = await dataParser(request) as string;
+    const user = users.find((user) => user.id === id);
+
+    if (!user) {
+        response.writeHead(404, { 'Content-type': 'application/json' });
+        response.end(JSON.stringify({ message: 'There is no user with this id.' }));
+    } else {
+        users.forEach((user: User) => {
+            if (user.id === id) {
+                user.username = JSON.parse(data)?.username || user.username;
+                user.age = JSON.parse(data)?.age || user.age;
+                user.hobbies = JSON.parse(data)?.hobbies|| user.hobbies;
+            };
+        });
+
+        response.writeHead(200, { 'Content-type': 'application/json' });
+        response.end((JSON.stringify(user)));
+    }
+}
+
+export const deleteUser = async (response: http.ServerResponse, id: string): Promise<void> => {
+    if(!uuidReg.test(id)) {
+        response.writeHead(400, { 'Content-type': 'application/json' });
+        response.end(JSON.stringify({ message: 'Invalid userId.' }));
+        return;
+    }
+
+    users.forEach((user: User) => {
+        if (user.id === id) {
+            users = users.filter((user) => user.id !== id);
+            response.writeHead(204, { 'Content-type': 'application/json' });
+            response.end();
+        }
+    });
+
+    response.writeHead(404, { 'Content-type': 'application/json' });
+    response.end(JSON.stringify({ message: 'There is no user with this id.' }));
+}
